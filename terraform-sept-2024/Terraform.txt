@@ -1,0 +1,270 @@
+Infrastructure as code [IAC] : 
+
+Terraform:
+Hashicorp
+HCL(hashicorp cofiguration language)
+
+The extension of terraform configuration file is .tf
+
+Advantages:
+1. Plannability:
+2. Reusability: 
+3. Maintainability: 
+
+
+Installation:
+1. Downloaded the zip from terraform website [terraform.io] and extract the executable file.
+
+2. Keep the executable in some folder and take the path where it is located.
+
+3. Add the path of terraform executable file to the environment variables in windows.
+
+4. Configure AWS cli with access key and Secret key.
+
+To download and configure AWS cli, check this --> https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+
+
+
+Terraform AWS documentation: https://registry.terraform.io/providers/hashicorp/aws/latest/docs
+
+provider "aws" {
+    region = "ap-south-1"
+}
+
+resource "aws_instance" "terraform-ec2" {
+    ami = "ami-0645cf88151eb2007"
+    key_name = "terraform"
+    instance_type = "t2.micro"
+    tags = {
+        Name = "Ec2-terraform"
+    }
+}
+
+------------------------------------------------------------------------------------------------
+
+Terraform Lifecycle/ Terraform Execution Process
+1. Terraform init:
+    
+    Terraform init operations:
+    a. Initializes the backend
+    b. Initializes the provider plugin
+    c. Initializes the child modules
+
+ Providers: 
+
+
+syntax:
+provider "aws" {
+    region = "ap-south-1"
+    access_key = "<aws access key here>"
+    secret_key = "<aws secret key here>"
+}
+ command: terraform init
+
+2. Terraform plan:
+
+command
+terraform plan
+
+3. Terraform apply:
+
+commands:
+terraform apply --> to apply the configuration files
+terraform apply --auto-approve --> to apply the changes with auto approval.
+
+4. Terraform destroy:
+
+commands:
+terraform destroy --> to  destroy the terraform managed Infrastructure
+terraform destroy -target=<resource-type>.<resource-name> --> to destroy the specific resource type.
+terraform destroy --auto-approve --> to destroy the terraform managed Infrastructure with auto approval
+
+
+
+Terraform Validate:
+
+command: terraform validate
+
+
+
+Assignment: 
+1. List and try different ways of providing input variables.
+2. Difference between variables.tf and variables.tfvars
+3. difference between count and For_each
+
+Input variables:
+syntax:
+
+variable "<variable-name>" {
+    description = "<Information about the variable>"
+    type = "<strings, list, Integers, Boolean>"
+    default = "The value to be passed to the configuration files"   
+}
+
+Output values:
+syntax:
+output "<output-name>" {
+    value = <resource-type>.<resource-name>.<value>
+}
+
+ Meta-argument:
+ 1.count
+ 2.For_each
+ 3depends_on
+
+ count &For_each
+
+
+ Datasource:
+ 
+ syntax:
+data "resource_type" "resource_name"{
+    #identifier
+}
+
+
+Resource dependency:
+syntax:
+depends_on = [ <resource_type>.<resource_name>,<>.<>, ]
+
+
+Alias:
+
+
+Resource Attributes:
+
+Provisioners:
+Terraform provisioners are used to execute scripts or commands on the local machines or on the remote machines. For provisioners to work they require a connection block to run commands on the remote machines.
+
+Types of Provisioners:
+1. file: this provisioner is used to copy files or directories from the local machine to the remote machines.
+
+syntax:
+resource "aws_instance" "name"{
+  <ec2 creation details>
+  connection{
+    type = "ssh"
+    user = "ec2-user"
+    host = self.public_ip
+    private_key = file("<path to the pem file>")
+  }
+
+provisioner "file"{
+    source = "<path of file/directory on local machine>"
+    destination = "<path where the file needs to be copied>"
+}
+
+}
+
+
+2. local-exec: this provisioner is used to run the commands on the local machines where terraform is installed.
+
+syntax:
+resource "aws_instance" "name"{
+  <ec2 creation details>
+
+provisioner "local-exec"{
+    command = "<commands to be executed on local machine>"
+}
+
+}
+
+3. remote-exec:used to run the scripts or commands on a remote resource.
+
+Types:
+3.1. inline: used t execute list of commands
+3.2. script: used to copy and execute a script on the remote machine
+3.3. scripts: used to copy a list of scripts and execute them on remote machine.
+
+syntax: 
+resource "aws_instance" "name"{
+  <ec2 creation details>
+  <connection block>
+
+provisioner "remote-exec" {
+    inline = [
+        <command1>,
+        <command2>,
+        <>,
+        <>
+    ]
+}
+}
+
+Null Resource:
+
+syntax:
+resource "null_resource" "name" {
+<connection_block>
+<provisioner_block>
+
+}
+
+provider "aws" {
+    region = "us-east-1"
+}
+
+data "aws_instance" "data-ec2"{
+    instance_tags = {
+        Name = "Ec2-terraform"
+    }
+}
+
+resource "null_resource" "terraform-ec2"{
+
+connection {
+    type     = "ssh"
+    user     = "ec2-user"
+    private_key = file("./terraform_us_east.pem")
+    host     = data.aws_instance.data-ec2.public_ip
+  }
+
+  provisioner "file" {
+    source = "./inline.sh"
+    destination = "/home/ec2-user/inline.sh"
+  }
+provisioner "remote-exec" {
+  inline =[
+    "sh /home/ec2-user/inline.sh",
+    "touch /home/ec2-user/inline-copy-test.txt"
+  ]
+}
+
+}
+
+
+Terraform Settings:
+
+syntax:
+terraform {
+  required_version = ">=1.6.3"
+
+  required_providers {
+    aws = {
+        source = "hashicorp/aws"
+        version = ">=5.24.0"
+    }
+  
+}
+}
+
+----------------------------------------------------------------------------------------
+Terraform state:
+JSON JavaScript Object Notation
+
+cloud/console
+
+
+Remote state(Backend):
+
+
+State lock:
+
+
+Advantages of Remote state:
+1. safer storage of statefile
+2. common statefile within the team.
+
+
+
+
